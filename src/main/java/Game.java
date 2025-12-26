@@ -1,4 +1,4 @@
-import java.net.URL;
+import java.net.URI;
 import java.time.LocalDateTime;
 
 public class Game {
@@ -6,5 +6,5 @@ public class Game {
     public String opponent;
     public LocalDateTime startingTime;
     public String location;
-    public URL MatchDetails;
+    public URI matchDetails;
 }
