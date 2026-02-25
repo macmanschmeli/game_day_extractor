@@ -8,4 +8,13 @@ public class UnitTest {
         ArrayList<Game> games = emulator.getGames("Perchtholdsdorf");
         System.out.println("test done");
     }
+    @org.junit.jupiter.api.Test
+    public void testCFHTMLExtractor(){
+        CloudflareHTMLExtractor extractor = new CloudflareHTMLExtractor();
+        String html = extractor.getHTML("https://panel.volleystation.com/website/150/de/phase-4089-no1llh/schedule/");
+        System.out.println("test done");
+        System.out.println(html);
+
+
+    }
 }
