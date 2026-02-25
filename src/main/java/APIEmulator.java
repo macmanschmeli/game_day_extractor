@@ -18,10 +18,9 @@ public class APIEmulator {
         this.endpoint = endpoint;
     }
 
-    public ArrayList<Game> getGames(String teamName){
+    public ArrayList<Game> getGames(String teamName, String html){
         Document doc;
-        CloudflareHTMLExtractor extractor = new CloudflareHTMLExtractor();
-        doc = Jsoup.parse(extractor.getHTML(endpoint));
+        doc = Jsoup.parse(html);
 
         Elements elements = doc.getElementsByClass(GAMETAG);
         if (elements.isEmpty()) {

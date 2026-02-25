@@ -22,7 +22,7 @@ public class GameWizard {
     private static final Logger logger = Logger.getLogger(GameWizard.class.getName());
     private final String filter;
 
-    private static final String NUMBERREGEX = "[\\d]";
+    private static final String NUMBERREGEX = "[^\\d]*";
     private static final String MATCHNUMBERTAG = "match-number";
     private static final String NAMETAG = "name";
     private static final String TIMETAG = "span";
@@ -78,7 +78,7 @@ public class GameWizard {
             game.startingTime = null;
             return;
         }
-        String dateTime = elements.first().val();
+        String dateTime = elements.first().text();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy, HH:mm", Locale.GERMAN);
         try {
             game.startingTime = LocalDateTime.parse(dateTime, formatter);
@@ -121,7 +121,7 @@ public class GameWizard {
     }
 
     private String getMatchLocation(Elements elements) {
-        String location = elements.getFirst().val();
+        String location = elements.getFirst().text();
         Pattern pattern = Pattern.compile("(?<=,)[^,]*(?=,)");
         Matcher matcher = pattern.matcher(location);
         if (!matcher.find()) {
@@ -136,10 +136,10 @@ public class GameWizard {
         if (elements != null && elements.size() > 1) {
             Element clubOne = elements.get(0);
             Element clubTwo = elements.get(1);
-            String clubOneName = clubOne.val();
-            String clubTwoName = clubTwo.val();
+            String clubOneName = clubOne.text();
+            String clubTwoName = clubTwo.text();
             if (isNullOrEmpty(clubOneName) || isNullOrEmpty(clubTwoName)) {
-                logger.log(Level.WARNING, "html node {0} with tag {1} has no value", new Object[]{element.val(), NAMETAG});
+                logger.log(Level.WARNING, "html node {0} with tag {1} has no value", new Object[]{element.text(), NAMETAG});
                 return null;
             }
             if (clubOneName.toLowerCase().contains(filter.toLowerCase())) {
@@ -148,12 +148,12 @@ public class GameWizard {
             if (clubTwoName.toLowerCase().contains(filter.toLowerCase())) {
                 return clubOneName;
             }
-            logger.log(Level.INFO, "html node {0} does not contain a game regarding {1}", new Object[]{element.val(), filter});
+            logger.log(Level.INFO, "html node {0} does not contain a game regarding {1}", new Object[]{element.text(), filter});
             return null;
 
 
         } else {
-            logger.log(Level.WARNING, "html node {0} has no tag named {1}", new Object[]{element.val(), NAMETAG});
+            logger.log(Level.WARNING, "html node {0} has no tag named {1}", new Object[]{element.text(), NAMETAG});
             return null;
         }
 
@@ -162,20 +162,20 @@ public class GameWizard {
     private int extractMatchNumber(Elements elements) {
         if (elements != null && !elements.isEmpty()) {
             Element matchnr = elements.getFirst();
-            String value = matchnr.val();
+            String value = matchnr.text();
             if (value == null) {
-                logger.log(Level.WARNING, "html node {0} with tag {1} has no value", new Object[]{element.val(), MATCHNUMBERTAG});
+                logger.log(Level.WARNING, "html node {0} with tag {1} has no value", new Object[]{element.text(), MATCHNUMBERTAG});
                 return -1;
             }
             Pattern pattern = Pattern.compile(NUMBERREGEX);
             try {
                 return Integer.parseInt(value.replaceAll(NUMBERREGEX, ""));
             } catch (NumberFormatException e) {
-                logger.log(Level.WARNING, "html node {0} with tag {1} has no integer in its value", new Object[]{element.val(), MATCHNUMBERTAG});
+                logger.log(Level.WARNING, "html node {0} with tag {1} has no integer in its value", new Object[]{element.text(), MATCHNUMBERTAG});
                 return -1;
             }
         } else {
-            logger.log(Level.WARNING, "html node {0} has no tag named {1}", new Object[]{element.val(), MATCHNUMBERTAG});
+            logger.log(Level.WARNING, "html node {0} has no tag named {1}", new Object[]{element.text(), MATCHNUMBERTAG});
             return -1;
         }
     }
@@ -193,11 +193,10 @@ public class GameWizard {
     private Document getMatchDetails(URI matchDetails) {
         Document doc;
         try {
-            doc = Jsoup.connect(matchDetails.toString()).get();
-        } catch (MalformedURLException e) {
-            logger.log(Level.SEVERE, "Given match details url {0} is has an invalid format", matchDetails);
-            return null;
-        } catch (IOException e) {
+            CloudflareHTMLExtractor extractor = new CloudflareHTMLExtractor();
+            String html = extractor.getHTML(matchDetails.toString());
+            doc = Jsoup.parse(html);
+        } catch (Exception e) {
             logger.log(Level.SEVERE, "Unable to get html for url {0}", matchDetails);
             return null;
         }
