@@ -13,9 +13,10 @@ public class CloudflareHTMLExtractor {
             "  Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });" +
             "}";
 
+
     private static final Random random = new Random();
 
-    String getHTML(String endpoint) {
+    public String getHTML(String endpoint) {
         Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
                 .setHeadless(false)); // Keep visible for testing
 
@@ -44,6 +45,7 @@ public class CloudflareHTMLExtractor {
         System.out.println("Page content retrieved successfully.");
 
         browser.close();
+        playwright.close();
         return html;
     }
 

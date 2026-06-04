@@ -28,6 +28,7 @@ public class GameWizard {
     private static final String TIMETAG = "span";
     private static final String HREFTAG = "href";
     private static final String LOCATIONTAG = "details date";
+    private static final String GAMETAG="table-row";
 
     GameWizard(Element element, String filter) {
         this.element = element;
@@ -43,13 +44,63 @@ public class GameWizard {
         insertOpponentName(game);
         if (isNullOrEmpty(game.opponent)) return null;
 
-        insertMatchDetails(game);
-        if (game.matchDetails == null) return null;
-
-        insertDetailsFromSubPage(game);
-        if (game.location == null || game.startingTime == null) return null;
+        insertHomeAway(game);
+        insertStartingTimeFromHeader(game);
 
         return game;
+    }
+
+    private void insertStartingTimeFromHeader(Game game) {
+        // Walk up to find the nearest parent that contains an <h3> sibling
+
+        Element h3 = element.selectFirst("h3");
+        if (h3 == null) {
+            logger.log(Level.WARNING, "No <h3> date header found for match {0}", game.matchNumber);
+            game.startingTime = null;
+            return;
+        }
+
+        String rawDate = h3.text().trim(); // e.g. "24 Januar 2026, Samstag"
+        // Strip the weekday suffix (", Samstag") if present
+        String datePart = rawDate.contains(",") ? rawDate.substring(0, rawDate.indexOf(",")).trim() : rawDate;
+
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.GERMAN);
+        try {
+            // Date only — set time to midnight as a neutral default
+            game.startingTime = LocalDateTime.parse(datePart + " 00:00",
+                    DateTimeFormatter.ofPattern("d MMMM yyyy HH:mm", Locale.GERMAN));
+        } catch (DateTimeParseException e) {
+            logger.log(Level.WARNING, "Unable to parse date from header string \"{0}\" for match {1}",
+                    new Object[]{rawDate, game.matchNumber});
+            game.startingTime = null;
+        }
+    }
+
+    private void insertHomeAway(Game game) {
+        Element homeEl = element.selectFirst(".rival.home .name");
+        Element awayEl = element.selectFirst(".rival.away .name");
+
+        if (homeEl == null || awayEl == null) {
+            logger.log(Level.WARNING, "Could not find home/away name elements for match {0}", game.matchNumber);
+            game.location = null;
+            return;
+        }
+
+        String homeName = homeEl.text().trim();
+        String awayName = awayEl.text().trim();
+
+        // Reuse the filter to determine which side our club is on
+        boolean weAreHome = homeName.toLowerCase().contains(filter.toLowerCase());
+        boolean weAreAway = awayName.toLowerCase().contains(filter.toLowerCase());
+
+        if (!weAreHome && !weAreAway) {
+            logger.log(Level.INFO, "Neither home ({0}) nor away ({1}) matches filter \"{2}\" for match {3}",
+                    new Object[]{homeName, awayName, filter, game.matchNumber});
+            return;
+        }
+
+        // Store home/away context in location field as a readable label
+        game.location = weAreHome ? "Heim" : "Auswärts";
     }
 
     private void insertDetailsFromSubPage(Game game) {

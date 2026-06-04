@@ -54,11 +54,7 @@
             const formattedDate = `${year}-${month}-${day}`;
 
             var calendar = new FullCalendar.Calendar(calendarEl, {
-                plugins: ['interaction', 'dayGrid'],
-                defaultDate: formattedDate,
-                editable: true,
-                eventLimit: true, // allow "more" link when too many events
-                events: [
+                /*events: [
                     {
                         title: 'All Day Event',
                         start: '2020-02-01'
@@ -114,6 +110,17 @@
                         start: '2020-02-28'
                     }
                 ]
+                    */
+                plugins: ['interaction', 'dayGrid'],
+                defaultDate: formattedDate,
+                editable: false,
+                eventLimit: true,
+                events: function (fetchInfo, successCallback, failureCallback) {
+                    fetch('appointments.json')
+                        .then(res => res.json())
+                        .then(data => successCallback(data))
+                        .catch(err => failureCallback(err));
+                }
             });
 
             calendar.render();

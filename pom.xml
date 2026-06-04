@@ -22,7 +22,7 @@
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.10.2</version>
+            <version>1.18.3</version>
         </dependency>
         <dependency>
             <groupId>org.junit</groupId>
@@ -47,6 +47,11 @@
             <groupId>com.microsoft.playwright</groupId>
             <artifactId>playwright</artifactId>
             <version>1.57.0</version>
+        </dependency>
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.17.2</version>
         </dependency>
     </dependencies>
     <build>

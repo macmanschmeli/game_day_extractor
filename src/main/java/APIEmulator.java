@@ -10,13 +10,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class APIEmulator {
-    private String endpoint;
     private static final Logger logger= Logger.getLogger(APIEmulator.class.getName());
-    private static final String GAMETAG="table-row";
-
-    APIEmulator(String endpoint) {
-        this.endpoint = endpoint;
-    }
+    private static final String GAMETAG="table list matches";
 
     public ArrayList<Game> getGames(String teamName, String html){
         Document doc;
