@@ -2,6 +2,7 @@ import java.net.URI;
 import java.time.LocalDateTime;
 
 public class Game {
+    public String prefix;
     public int matchNumber;
     public String opponent;
     public LocalDateTime startingTime;

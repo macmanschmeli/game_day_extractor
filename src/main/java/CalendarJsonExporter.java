@@ -3,10 +3,8 @@ import java.io.IOException;
 import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -52,8 +50,13 @@ public class CalendarJsonExporter {
     }
 
     private String buildTitle(Game game) {
-        String time = game.startingTime.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm"));
-        return String.format("%s vs %s %s", game.location, game.opponent, time);
+        String time = game.startingTime != null ? game.startingTime.toLocalTime().format(DateTimeFormatter.ofPattern("HH:mm")) : "undefined";
+        try {
+            return game.prefix + " " + String.format("%s vs %s %s", game.location, game.opponent, time);
+
+        }catch (IllegalFormatException ex){
+            return "undefined";
+        }
     }
 
     private String formatStart(LocalDateTime dt) {

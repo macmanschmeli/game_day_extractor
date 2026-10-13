@@ -21,6 +21,9 @@ public class GameWizard {
     private final Element element;
     private static final Logger logger = Logger.getLogger(GameWizard.class.getName());
     private final String filter;
+    private final Pattern pattern;
+    private final String date;
+    private final String prefix;
 
     private static final String NUMBERREGEX = "[^\\d]*";
     private static final String MATCHNUMBERTAG = "match-number";
@@ -30,13 +33,17 @@ public class GameWizard {
     private static final String LOCATIONTAG = "details date";
     private static final String GAMETAG="table-row";
 
-    GameWizard(Element element, String filter) {
+    GameWizard(Element element, String filter, String date, String prefix) {
         this.element = element;
         this.filter = filter;
+        this.date = date;
+        this.prefix = prefix;
+        this.pattern = Pattern.compile(filter, Pattern.CASE_INSENSITIVE);
     }
 
     public Game extract() {
         Game game = new Game();
+        game.prefix = this.prefix;
 
         insertMatchNumer(game);
         if (game.matchNumber < 0) return null;
@@ -53,21 +60,22 @@ public class GameWizard {
     private void insertStartingTimeFromHeader(Game game) {
         // Walk up to find the nearest parent that contains an <h3> sibling
 
-        Element h3 = element.selectFirst("h3");
+        Element h3 = element.selectFirst("div.status.upcoming");
         if (h3 == null) {
             logger.log(Level.WARNING, "No <h3> date header found for match {0}", game.matchNumber);
             game.startingTime = null;
             return;
         }
 
-        String rawDate = h3.text().trim(); // e.g. "24 Januar 2026, Samstag"
+        String rawTime = h3.text().trim();
+        String rawDate = date.trim(); // e.g. "24 Januar 2026, Samstag"
         // Strip the weekday suffix (", Samstag") if present
         String datePart = rawDate.contains(",") ? rawDate.substring(0, rawDate.indexOf(",")).trim() : rawDate;
 
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.GERMAN);
         try {
             // Date only — set time to midnight as a neutral default
-            game.startingTime = LocalDateTime.parse(datePart + " 00:00",
+            game.startingTime = LocalDateTime.parse(datePart + " " + rawTime,
                     DateTimeFormatter.ofPattern("d MMMM yyyy HH:mm", Locale.GERMAN));
         } catch (DateTimeParseException e) {
             logger.log(Level.WARNING, "Unable to parse date from header string \"{0}\" for match {1}",
@@ -90,8 +98,10 @@ public class GameWizard {
         String awayName = awayEl.text().trim();
 
         // Reuse the filter to determine which side our club is on
-        boolean weAreHome = homeName.toLowerCase().contains(filter.toLowerCase());
-        boolean weAreAway = awayName.toLowerCase().contains(filter.toLowerCase());
+        boolean weAreHome = this.pattern.matcher(homeName).find();
+        boolean weAreAway = this.pattern.matcher(awayName).find();
+        //boolean weAreHome = homeName.toLowerCase().contains(filter.toLowerCase());
+        //boolean weAreAway = awayName.toLowerCase().contains(filter.toLowerCase());
 
         if (!weAreHome && !weAreAway) {
             logger.log(Level.INFO, "Neither home ({0}) nor away ({1}) matches filter \"{2}\" for match {3}",
@@ -193,12 +203,17 @@ public class GameWizard {
                 logger.log(Level.WARNING, "html node {0} with tag {1} has no value", new Object[]{element.text(), NAMETAG});
                 return null;
             }
-            if (clubOneName.toLowerCase().contains(filter.toLowerCase())) {
+            if (this.pattern.matcher(clubOneName).find())
                 return clubTwoName;
-            }
-            if (clubTwoName.toLowerCase().contains(filter.toLowerCase())) {
+            if (this.pattern.matcher(clubTwoName).find())
                 return clubOneName;
-            }
+
+           // if (clubOneName.toLowerCase().contains(filter.toLowerCase())) {
+           //     return clubTwoName;
+           // }
+           // if (clubTwoName.toLowerCase().contains(filter.toLowerCase())) {
+           //     return clubOneName;
+           // }
             logger.log(Level.INFO, "html node {0} does not contain a game regarding {1}", new Object[]{element.text(), filter});
             return null;
 

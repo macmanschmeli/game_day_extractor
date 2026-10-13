@@ -1,3 +1,4 @@
+import java.util.ArrayList;
 import java.util.Random;
 
 import com.microsoft.playwright.*;
@@ -15,6 +16,47 @@ public class CloudflareHTMLExtractor {
 
 
     private static final Random random = new Random();
+
+    public ArrayList<String[]> getHTMLs(String[][] endpoints){
+        Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
+                .setHeadless(false)); // Keep visible for testing
+
+        // 1. Create a context with a realistic User-Agent
+        BrowserContext context = browser.newContext(new Browser.NewContextOptions()
+                .setUserAgent(UserAgent));
+
+        // 2. Add Init Script to mask WebDriver
+        context.addInitScript(InitScript);
+
+        Page page = context.newPage();
+
+        // 3. Navigate with human-like randomized behavior
+
+        //humanDelay(2000, 5000); // Wait before navigating
+        System.out.println("Navigating to Volleystation...");
+
+        ArrayList<String[]> htmls = new ArrayList<>();
+
+        for (String[] endpoint : endpoints){
+
+            page.navigate(endpoint[0]);
+            //simulateHumanActivity(page);
+
+            // Wait for the specific data table to appear
+            page.waitForLoadState(LoadState.NETWORKIDLE, new Page.WaitForLoadStateOptions().setTimeout(0));
+            //humanDelay(3000, 6000); // Simulate "reading" time
+
+            // Extract content
+            String html = page.content();
+            System.out.println("Page content retrieved successfully.");
+            htmls.add(new String[]{ html,endpoint[1],endpoint[2]});
+
+        }
+        browser.close();
+        playwright.close();
+        return htmls;
+
+    }
 
     public String getHTML(String endpoint) {
         Browser browser = playwright.chromium().launch(new BrowserType.LaunchOptions()
